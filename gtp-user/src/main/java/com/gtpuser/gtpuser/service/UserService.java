@@ -5,8 +5,11 @@ import com.gtpuser.gtpuser.Controller.models.UserRes;
 import com.gtpuser.gtpuser.kafka.event.UserEvent;
 import com.gtpuser.gtpuser.models.User;
 import com.gtpuser.gtpuser.repo.*;
+import com.gtpuser.gtpuser.utils.TokenManager;
+import com.nimbusds.jwt.SignedJWT;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -29,15 +32,18 @@ public class UserService {
     private FansRepo fansRepo;
 
     @Autowired
+    private TokenManager tokenCreator;
+
+    @Autowired
     private ReactiveKafkaProducerTemplate<String, UserEvent> template;
 
-    public Mono<UserRes> saveUser(UserReq userReq){
+    public Mono<ResponseEntity<UserRes>> saveUser(UserReq userReq){
         ModelMapper modelMapper = new ModelMapper();
         UUID uuid = UUID.randomUUID();
         User user = modelMapper.map(userReq, User.class);
         user.setId(uuid);
         return userRepo.save(user)
-                .map(i->{
+                .map(i -> {
                     UserEvent userEvent = new UserEvent(
                             uuid,
                             i.getAccountNonLocked(),
@@ -50,12 +56,20 @@ public class UserService {
                             i.getRoles(),
                             i.getAuthorities()
                     );
-                    template.send("user-created",i.getId().toString(), userEvent).subscribe(
+                    template.send("user-created", i.getId().toString(), userEvent).subscribe(
 
                     );
-                    return i;
+                    try {
+                        SignedJWT signedJWT = tokenCreator.createSignedJWT(i, i.getPhoneNumber());
+                        String encryptToken = tokenCreator.encryptToken(signedJWT);
+                        return ResponseEntity.ok()
+                                .header("Authorization", encryptToken)
+                                .body(modelMapper.map(i, UserRes.class));
+                    } catch (Exception e) {
+                        return ResponseEntity.ok()
+                                .body(modelMapper.map(i, UserRes.class));
+                    }
                 })
-                .map(i-> modelMapper.map(i, UserRes.class))
                 .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
     }
 

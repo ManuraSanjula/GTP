@@ -1,7 +1,7 @@
 package com.gtpuser.gtpuser.security;
 
 import com.gtpuser.gtpuser.security.support.ServerHttpBearerAuthenticationConverter;
-import com.gtpuser.gtpuser.utils.TokenConverter;
+import com.gtpuser.gtpuser.utils.TokenManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class WebSecurityConfig {
     private final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
 
     @Autowired
-    private TokenConverter tokenConverter;
+    private TokenManager tokenConverter;
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,AuthenticationManager authManager) {

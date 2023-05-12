@@ -3,7 +3,7 @@ package com.gtpuser.gtpuser.security.support;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import com.gtpuser.gtpuser.utils.TokenConverter;
+import com.gtpuser.gtpuser.utils.TokenManager;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,9 +18,9 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 	private static final Function<String, Mono<String>> isolateBearerValue = authValue -> Mono
 			.justOrEmpty(authValue.substring(BEARER.length()));
 	
-	private final TokenConverter tokenConverter;
+	private final TokenManager tokenConverter;
 
-	public ServerHttpBearerAuthenticationConverter(TokenConverter tokenConverter) {
+	public ServerHttpBearerAuthenticationConverter(TokenManager tokenConverter) {
 		super();
 		this.tokenConverter = tokenConverter;
 	}

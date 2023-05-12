@@ -9,7 +9,7 @@ spring:
       authentication-database: admin
   kafka:
     bootstrap-servers:
-      - localhost:8083
+      - localhost:8081
     consumer:
       group-id: demo-group
       auto-offset-reset: earliest
@@ -24,4 +24,7 @@ spring:
 security:
   ignored=/**:
   enable-csrf: false
+
+tokenSecret: wtjqd7tt672z4tn7gnf76igx2fyg2gfy7gnyg4wyfn73ytgy5nfywyvyrgvygby7fgnuyvzvycvynxcyrgncygnygyynguy4rgygyurgcywvyvygyg4wygfyg47g2uyzmIUNWIdhmx4ubgy4gnygnxygygygn
+
 
