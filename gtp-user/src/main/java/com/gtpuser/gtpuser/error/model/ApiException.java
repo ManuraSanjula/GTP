@@ -1,4 +1,4 @@
-package com.gtpuser.gtpuser.error;
+package com.gtpuser.gtpuser.error.model;
 
 import lombok.Getter;
 

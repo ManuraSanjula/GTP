@@ -115,10 +115,12 @@ public class TokenManager {
 			if (!signedJWT.verify(new RSASSAVerifier(publicKey)))
 				return Mono.just(userEntity);
 
-			String id = signedJWT.getPayload().toJSONObject().get("sub").toString();
-			UUID userId = UUID.fromString(id);
-			return userRepo.findById(userId)
-					.publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
+			String number = signedJWT.getPayload().toJSONObject().get("sub").toString();
+
+			return userRepo.findByPhoneNumber(number)
+					.publishOn(Schedulers.boundedElastic())
+					//.filter(i-> i.getAuthorities() != null)
+					.switchIfEmpty(Mono.empty())
 					.subscribeOn(Schedulers.boundedElastic());
 
 		} catch (Exception e) {

@@ -1,4 +1,4 @@
-package com.gtpuser.gtpuser.error;
+package com.gtpuser.gtpuser.error.model;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

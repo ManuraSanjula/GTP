@@ -9,7 +9,7 @@ spring:
       authentication-database: admin
   kafka:
     bootstrap-servers:
-      - localhost:8081
+      - localhost:8082
     consumer:
       group-id: demo-group
       auto-offset-reset: earliest

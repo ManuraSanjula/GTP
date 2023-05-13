@@ -2,9 +2,12 @@ package com.gtpuser.gtpuser.service;
 
 import com.gtpuser.gtpuser.Controller.models.UserReq;
 import com.gtpuser.gtpuser.Controller.models.UserRes;
+import com.gtpuser.gtpuser.error.model.UserError;
+import com.gtpuser.gtpuser.error.model.UserNotFoundError;
 import com.gtpuser.gtpuser.kafka.event.UserEvent;
 import com.gtpuser.gtpuser.models.User;
 import com.gtpuser.gtpuser.repo.*;
+import com.gtpuser.gtpuser.utils.ErrorMessages;
 import com.gtpuser.gtpuser.utils.TokenManager;
 import com.nimbusds.jwt.SignedJWT;
 import org.modelmapper.ModelMapper;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 @Service
@@ -41,7 +45,20 @@ public class UserService {
         ModelMapper modelMapper = new ModelMapper();
         UUID uuid = UUID.randomUUID();
         User user = modelMapper.map(userReq, User.class);
+        user.setAuthorities(Arrays.asList("READ_AUTHORITY","WRITE_AUTHORITY","DELETE_AUTHORITY","UPDATE_AUTHORITY"));
+        user.setRoles(Arrays.asList("ROLE_USER"));
         user.setId(uuid);
+
+        return userRepo.findByPhoneNumber(userReq.getPhoneNumber()).flatMap(i->{
+            if(i == null)
+                return getAuthorization(modelMapper, uuid, user)
+                        .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+            return Mono.error(new UserError(ErrorMessages.RECORD_ALREADY_EXISTS.getErrorMessage()));
+        });
+
+    }
+
+    private Mono<ResponseEntity<UserRes>> getAuthorization(ModelMapper modelMapper, UUID uuid, User user) {
         return userRepo.save(user)
                 .map(i -> {
                     UserEvent userEvent = new UserEvent(
@@ -76,7 +93,8 @@ public class UserService {
     public Mono<UserRes> getUser(UUID id){
         ModelMapper modelMapper = new ModelMapper();
         return userRepo.findById(id).map(i-> modelMapper.map(i, UserRes.class))
-                .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+                .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+                .switchIfEmpty(Mono.error(new UserNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
     }
 
 
