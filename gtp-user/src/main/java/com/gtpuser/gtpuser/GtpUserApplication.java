@@ -5,11 +5,9 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import org.springframework.kafka.config.TopicBuilder;
-
 
 @SpringBootApplication(scanBasePackages={
 		"com.gtpuser.gtpuser","com.gtpuser.gtpuser.GtpUserApplication"})

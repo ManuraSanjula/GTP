@@ -17,13 +17,12 @@ import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class UserService {
-
     @Autowired
     private UserRepo userRepo;
     @Autowired
@@ -34,10 +33,8 @@ public class UserService {
     private FriendsRepo friendRepo;
     @Autowired
     private FansRepo fansRepo;
-
     @Autowired
     private TokenManager tokenCreator;
-
     @Autowired
     private ReactiveKafkaProducerTemplate<String, UserEvent> template;
 
@@ -46,7 +43,7 @@ public class UserService {
         UUID uuid = UUID.randomUUID();
         User user = modelMapper.map(userReq, User.class);
         user.setAuthorities(Arrays.asList("READ_AUTHORITY","WRITE_AUTHORITY","DELETE_AUTHORITY","UPDATE_AUTHORITY"));
-        user.setRoles(Arrays.asList("ROLE_USER"));
+        user.setRoles(List.of("ROLE_USER"));
         user.setId(uuid);
 
         return userRepo.findByPhoneNumber(userReq.getPhoneNumber()).flatMap(i->{
@@ -95,6 +92,23 @@ public class UserService {
         return userRepo.findById(id).map(i-> modelMapper.map(i, UserRes.class))
                 .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
                 .switchIfEmpty(Mono.error(new UserNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
+    }
+
+    public Mono<ResponseEntity<String>> updateUser(String fileName, String id){
+        try{
+            UUID userId = UUID.fromString(id);
+            return userRepo.findById(userId)
+                    .switchIfEmpty(Mono.error(new UserNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+                    .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+                    .flatMap(user->{
+                        user.setPic(fileName);
+                        return userRepo.save(user)
+                                .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+                                .map(__-> ResponseEntity.ok().body("Image Upload Done Successfully"));
+            });
+        }catch (Exception e){
+            return Mono.error(new UserError("Bad Request"));
+        }
     }
 
 
